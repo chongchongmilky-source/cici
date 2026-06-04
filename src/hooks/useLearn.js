@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 export function useLearn() {
   const { user } = useAuth()
   const [subjects, setSubjects] = useState([])
-  const [lessons, setLessons] = useState({}) // keyed by subjectId
+  const [lessons, setLessons] = useState({})
   const [loading, setLoading] = useState(true)
   const [activeSubject, setActiveSubject] = useState(null)
 
@@ -94,25 +94,19 @@ export function useLearn() {
     return data
   }
 
+  const resetLearn = async () => {
+    if (!user) return
+    await learnService.deleteAllSubjects(user.id)
+    setSubjects([])
+    setLessons({})
+    setActiveSubject(null)
+    toast.success('Đã xoá toàn bộ môn học và bài học')
+  }
+
   return {
     subjects, lessons, loading, activeSubject, setActiveSubject,
     loadLessons, addSubject, updateSubject, removeSubject,
-    addLesson, updateLesson, removeLesson, reviewLesson
+    addLesson, updateLesson, removeLesson, reviewLesson,
+    resetLearn
   }
-  // ... thêm:
-const resetLearn = async () => {
-  if (!user) return;
-  await learnService.deleteAllSubjects(user.id);
-  setSubjects([]);
-  setLessons({});
-  setActiveSubject(null);
-  toast.success('Đã xoá toàn bộ môn học và bài học');
-};
-
-return {
-  subjects, lessons, loading, activeSubject, setActiveSubject,
-  loadLessons, addSubject, updateSubject, removeSubject,
-  addLesson, updateLesson, removeLesson, reviewLesson,
-  resetLearn  // 👈 thêm dòng này
-};
 }
