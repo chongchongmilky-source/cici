@@ -1,4 +1,3 @@
-// src/pages/Settings.jsx
 import { useState } from 'react';
 import { useTasks } from '../hooks/useTasks';
 import { useBugs } from '../hooks/useBugs';
@@ -10,74 +9,58 @@ export default function Settings() {
   const { bugs, resetBugs } = useBugs();
   const { subjects, resetLearn } = useLearn();
 
-  const [confirming, setConfirming] = useState(null); // 'tasks', 'bugs', 'learn'
+  const [confirming, setConfirming] = useState(null);
 
   const handleReset = async (type) => {
-    if (type === 'tasks') await resetTasks();
-    if (type === 'bugs') await resetBugs();
-    if (type === 'learn') await resetLearn();
-    setConfirming(null);
+    try {
+      if (type === 'tasks' && resetTasks) await resetTasks();
+      if (type === 'bugs' && resetBugs) await resetBugs();
+      if (type === 'learn' && resetLearn) await resetLearn();
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setConfirming(null);
+    }
   };
 
-  const cards = [
-    {
-      id: 'tasks',
-      title: '📋 Công việc',
-      count: tasks.length,
-      description: 'Xoá toàn bộ danh sách công việc của bạn.',
-      confirmMsg: `Xoá ${tasks.length} công việc? Hành động này không thể hoàn tác.`
-    },
-    {
-      id: 'bugs',
-      title: '🐞 Lỗi',
-      count: bugs.length,
-      description: 'Xoá toàn bộ báo cáo lỗi.',
-      confirmMsg: `Xoá ${bugs.length} lỗi? Hành động này không thể hoàn tác.`
-    },
-    {
-      id: 'learn',
-      title: '📚 Ôn luyện',
-      count: subjects.length,
-      description: 'Xoá toàn bộ môn học và bài học (kèm lịch sử ôn tập).',
-      confirmMsg: `Xoá ${subjects.length} môn học và tất cả bài học bên trong? Hành động này không thể hoàn tác.`
-    }
-  ];
+  const getCount = (type) => {
+    if (type === 'tasks') return tasks.length;
+    if (type === 'bugs') return bugs.length;
+    return subjects.length;
+  };
+
+  const getMessage = (type) => {
+    const count = getCount(type);
+    if (type === 'tasks') return `Xoá ${count} công việc? Không thể hoàn tác.`;
+    if (type === 'bugs') return `Xoá ${count} lỗi? Không thể hoàn tác.`;
+    return `Xoá ${count} môn học (và bài học)? Không thể hoàn tác.`;
+  };
 
   return (
     <div style={{ padding: '24px 32px' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Cài đặt hệ thống</h1>
-      <p style={{ color: 'var(--text2)', marginBottom: 32 }}>
-        Quản lý dữ liệu: đặt lại từng phần về trạng thái trống.
-      </p>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 20 }}>
-        {cards.map(card => (
-          <div key={card.id}
-            style={{
-              background: 'var(--bg2)',
-              border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)',
-              padding: '20px',
-              transition: 'all var(--transition)'
-            }}>
-            <div style={{ fontSize: 28, marginBottom: 12 }}>{card.title.split(' ')[0]}</div>
-            <div style={{ fontSize: 36, fontWeight: 800, marginBottom: 4 }}>{card.count}</div>
-            <div style={{ fontSize: 13, color: 'var(--text2)', marginBottom: 16 }}>{card.description}</div>
+      <h1>Cài đặt hệ thống</h1>
+      <p>Đặt lại dữ liệu từng phần về trạng thái trống.</p>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: 20 }}>
+        {['tasks', 'bugs', 'learn'].map(type => (
+          <div key={type} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: 20 }}>
+            <div style={{ fontSize: 36, fontWeight: 800 }}>{getCount(type)}</div>
+            <div style={{ margin: '8px 0 16px' }}>
+              {type === 'tasks' && '📋 Công việc'}
+              {type === 'bugs' && '🐞 Lỗi'}
+              {type === 'learn' && '📚 Ôn luyện'}
+            </div>
             <button
-              onClick={() => setConfirming(card.id)}
-              disabled={card.count === 0}
+              onClick={() => setConfirming(type)}
+              disabled={getCount(type) === 0}
               style={{
-                background: card.count === 0 ? 'var(--bg3)' : 'var(--accent2)',
-                color: card.count === 0 ? 'var(--text3)' : '#fff',
+                background: getCount(type) === 0 ? 'var(--bg3)' : 'var(--accent2)',
+                color: '#fff',
                 border: 'none',
-                borderRadius: 'var(--radius-sm)',
+                borderRadius: 6,
                 padding: '8px 16px',
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: card.count === 0 ? 'not-allowed' : 'pointer',
-                transition: 'opacity 0.2s'
+                cursor: getCount(type) === 0 ? 'not-allowed' : 'pointer'
               }}>
-              {card.count === 0 ? '✅ Đã trống' : '🔄 Reset về 0'}
+              {getCount(type) === 0 ? '✅ Đã trống' : '🔄 Reset'}
             </button>
           </div>
         ))}
@@ -86,15 +69,15 @@ export default function Settings() {
       {confirming && (
         <ConfirmDialog
           title="Xác nhận reset"
-          message={cards.find(c => c.id === confirming)?.confirmMsg}
+          message={getMessage(confirming)}
           danger
           onConfirm={() => handleReset(confirming)}
           onCancel={() => setConfirming(null)}
         />
       )}
 
-      <div style={{ marginTop: 40, padding: '16px 20px', background: 'var(--bg3)', borderRadius: 'var(--radius)', borderLeft: '4px solid var(--accent)' }}>
-        <strong>💡 Lưu ý:</strong> Dữ liệu sau khi reset không thể khôi phục. Bạn có thể tạo lại dữ liệu mẫu bằng cách thêm thủ công từ các trang tương ứng.
+      <div style={{ marginTop: 40, padding: 16, background: 'var(--bg3)', borderRadius: 'var(--radius)', borderLeft: '4px solid var(--accent)' }}>
+        💡 Dữ liệu sau khi reset không thể khôi phục.
       </div>
     </div>
   );
