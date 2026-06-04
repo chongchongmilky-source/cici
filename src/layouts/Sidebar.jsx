@@ -18,6 +18,8 @@ const css = `
   flex-direction: column;
   padding: 20px 12px;
   gap: 2px;
+  height: 100%;
+  position: relative;
 }
 .sb-logo {
   padding: 6px 10px 20px;
@@ -100,20 +102,68 @@ const css = `
   word-break: break-all;
   line-height: 1.4;
 }
+
+/* Nút đóng - chỉ hiện trên mobile */
+.sb-close-mobile {
+  display: none;
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: var(--bg3);
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: var(--text2);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  align-items: center;
+  justify-content: center;
+}
+.sb-close-mobile:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+@media (max-width: 768px) {
+  .sb-close-mobile {
+    display: flex;
+  }
+  .sb-logo {
+    padding-right: 40px;
+  }
+}
 `
 
-export default function Sidebar() {
+export default function Sidebar({ onClose }) {
   const { user, signOut } = useAuth()
+
+  const handleClose = () => {
+    if (onClose) onClose()
+  }
+
+  const handleNavClick = () => {
+    // Tự động đóng menu sau khi chuyển trang (trên mobile)
+    if (window.innerWidth <= 768 && onClose) {
+      onClose()
+    }
+  }
 
   return (
     <>
       <style>{css}</style>
       <aside className="sb">
+        {/* Nút đóng cho mobile */}
+        <button className="sb-close-mobile" onClick={handleClose}>
+          ✕
+        </button>
+        
         <div className="sb-logo">
           <span className="sb-logo-tag">QLCV</span>
           <span className="sb-logo-name">Workspace</span>
         </div>
         <div className="sb-divider" />
+        
         {nav.map(n => (
           <NavLink
             key={n.to}
@@ -121,16 +171,28 @@ export default function Sidebar() {
             end={n.exact}
             className={({ isActive }) => 'sb-link' + (isActive ? ' active' : '')}
             style={{ '--link-color': n.color }}
+            onClick={handleNavClick}
           >
             <span className="sb-icon">{n.icon}</span>
             {n.label}
           </NavLink>
         ))}
+        
         <div className="sb-bottom">
-          <NavLink to="/settings" className={({ isActive }) => 'sb-settings' + (isActive ? ' active' : '')}>
+          <NavLink 
+            to="/settings" 
+            className={({ isActive }) => 'sb-settings' + (isActive ? ' active' : '')}
+            onClick={handleNavClick}
+          >
             <span style={{ fontSize: 14 }}>⚙</span> Cài đặt
           </NavLink>
-          <button className="sb-settings" onClick={signOut}>
+          <button 
+            className="sb-settings" 
+            onClick={() => {
+              signOut()
+              if (onClose) onClose()
+            }}
+          >
             <span style={{ fontSize: 14 }}>↩</span> Đăng xuất
           </button>
           <div className="sb-user">{user?.email}</div>
