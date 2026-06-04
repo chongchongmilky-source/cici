@@ -99,4 +99,20 @@ export function useLearn() {
     loadLessons, addSubject, updateSubject, removeSubject,
     addLesson, updateLesson, removeLesson, reviewLesson
   }
+  // ... thêm:
+const resetLearn = async () => {
+  if (!user) return;
+  await learnService.deleteAllSubjects(user.id);
+  setSubjects([]);
+  setLessons({});
+  setActiveSubject(null);
+  toast.success('Đã xoá toàn bộ môn học và bài học');
+};
+
+return {
+  subjects, lessons, loading, activeSubject, setActiveSubject,
+  loadLessons, addSubject, updateSubject, removeSubject,
+  addLesson, updateLesson, removeLesson, reviewLesson,
+  resetLearn  // 👈 thêm dòng này
+};
 }

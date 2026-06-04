@@ -2,24 +2,22 @@ import { supabase } from './supabase'
 
 const TABLE = 'tasks'
 
-// Hàm chuẩn hóa priority về đúng enum tiếng Anh
+// Hàm chuẩn hóa priority
 function normalizePriority(priority) {
   const mapping = {
-    // Tiếng Việt -> English
     'Thấp': 'low',
     'Trung bình': 'medium',
     'Cao': 'high',
     'Khẩn cấp': 'urgent',
-    // Nếu vẫn là tiếng Anh thì giữ nguyên
     'low': 'low',
     'medium': 'medium',
     'high': 'high',
     'urgent': 'urgent',
   }
-  return mapping[priority] || 'medium' // fallback
+  return mapping[priority] || 'medium'
 }
 
-// Hàm chuẩn hóa status (tương tự, nếu cần)
+// Hàm chuẩn hóa status
 function normalizeStatus(status) {
   const mapping = {
     'Cần làm': 'todo',
@@ -45,7 +43,6 @@ export const taskService = {
   },
 
   async create(task) {
-    // Chuẩn hóa priority và status trước khi gửi
     const normalizedTask = {
       ...task,
       priority: normalizePriority(task.priority),
@@ -77,7 +74,19 @@ export const taskService = {
   },
 
   async remove(id) {
-    const { error } = await supabase.from(TABLE).delete().eq('id', id)
+    const { error } = await supabase
+      .from(TABLE)
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
+
+  // 🆕 Xoá toàn bộ tasks của user
+  async deleteAll(userId) {
+    const { error } = await supabase
+      .from(TABLE)
+      .delete()
+      .eq('user_id', userId)
     if (error) throw error
   }
 }

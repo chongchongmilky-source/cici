@@ -44,4 +44,13 @@ export function useTasks() {
   }
 
   return { tasks, loading, reload: load, addTask, updateTask, removeTask }
+  // ... trong return object, thêm:
+const resetTasks = async () => {
+  if (!user) return;
+  await taskService.deleteAll(user.id);
+  setTasks([]);
+  toast.success('Đã xoá toàn bộ công việc');
+};
+
+return { tasks, loading, reload: load, addTask, updateTask, removeTask, resetTasks };
 }

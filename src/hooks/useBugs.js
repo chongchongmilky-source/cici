@@ -46,4 +46,13 @@ export function useBugs() {
   }
 
   return { bugs, loading, reload: load, addBug, updateBug, removeBug }
+  // ... tương tự:
+const resetBugs = async () => {
+  if (!user) return;
+  await bugService.deleteAll(user.id);
+  setBugs([]);
+  toast.success('Đã xoá toàn bộ bug');
+};
+
+return { bugs, loading, reload: load, addBug, updateBug, removeBug, resetBugs };
 }

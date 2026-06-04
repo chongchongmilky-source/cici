@@ -27,11 +27,17 @@ export const bugService = {
   async remove(id) {
     const { error } = await supabase.from(TABLE).delete().eq('id', id)
     if (error) throw error
+  },
+
+  // Thêm phương thức xóa toàn bộ bug của user
+  async deleteAll(userId) {
+    const { error } = await supabase.from(TABLE).delete().eq('user_id', userId)
+    if (error) throw error
   }
 }
 
 /*
-SQL để tạo bảng bugs trong Supabase:
+SQL để tạo bảng bugs trong Supabase (bổ sung cột environment, steps_to_reproduce, solution...):
 
 create table bugs (
   id uuid default gen_random_uuid() primary key,

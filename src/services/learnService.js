@@ -12,19 +12,40 @@ export const learnService = {
   },
 
   async createSubject(subject) {
-    const { data, error } = await supabase.from('subjects').insert(subject).select().single()
+    const { data, error } = await supabase
+      .from('subjects')
+      .insert(subject)
+      .select()
+      .single()
     if (error) throw error
     return data
   },
 
   async updateSubject(id, updates) {
-    const { data, error } = await supabase.from('subjects').update(updates).eq('id', id).select().single()
+    const { data, error } = await supabase
+      .from('subjects')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
     if (error) throw error
     return data
   },
 
   async removeSubject(id) {
-    const { error } = await supabase.from('subjects').delete().eq('id', id)
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('id', id)
+    if (error) throw error
+  },
+
+  // 🆕 Xoá toàn bộ subjects của user (cascade xóa lessons)
+  async deleteAllSubjects(userId) {
+    const { error } = await supabase
+      .from('subjects')
+      .delete()
+      .eq('user_id', userId)
     if (error) throw error
   },
 
@@ -39,19 +60,31 @@ export const learnService = {
   },
 
   async createLesson(lesson) {
-    const { data, error } = await supabase.from('lessons').insert(lesson).select().single()
+    const { data, error } = await supabase
+      .from('lessons')
+      .insert(lesson)
+      .select()
+      .single()
     if (error) throw error
     return data
   },
 
   async updateLesson(id, updates) {
-    const { data, error } = await supabase.from('lessons').update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+    const { data, error } = await supabase
+      .from('lessons')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select()
+      .single()
     if (error) throw error
     return data
   },
 
   async removeLesson(id) {
-    const { error } = await supabase.from('lessons').delete().eq('id', id)
+    const { error } = await supabase
+      .from('lessons')
+      .delete()
+      .eq('id', id)
     if (error) throw error
   },
 
@@ -59,7 +92,11 @@ export const learnService = {
   async logReview(lessonId, quality) {
     const now = new Date().toISOString()
     // Simple SM-2 spaced repetition
-    const { data: lesson } = await supabase.from('lessons').select('*').eq('id', lessonId).single()
+    const { data: lesson } = await supabase
+      .from('lessons')
+      .select('*')
+      .eq('id', lessonId)
+      .single()
     const { repetitions = 0, ease_factor = 2.5, interval = 1 } = lesson
 
     let newEF = ease_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02))
@@ -69,15 +106,20 @@ export const learnService = {
     const nextDate = new Date()
     nextDate.setDate(nextDate.getDate() + newInterval)
 
-    const { data, error } = await supabase.from('lessons').update({
-      repetitions: newRep,
-      ease_factor: newEF,
-      interval: newInterval,
-      next_review: nextDate.toISOString().split('T')[0],
-      last_reviewed: now,
-      review_count: (lesson.review_count || 0) + 1,
-      updated_at: now,
-    }).eq('id', lessonId).select().single()
+    const { data, error } = await supabase
+      .from('lessons')
+      .update({
+        repetitions: newRep,
+        ease_factor: newEF,
+        interval: newInterval,
+        next_review: nextDate.toISOString().split('T')[0],
+        last_reviewed: now,
+        review_count: (lesson.review_count || 0) + 1,
+        updated_at: now,
+      })
+      .eq('id', lessonId)
+      .select()
+      .single()
     if (error) throw error
     return data
   }
@@ -107,7 +149,6 @@ create table lessons (
   note text,
   order_index integer default 0,
   status text default 'not_started' check (status in ('not_started','learning','mastered')),
-  -- Spaced repetition fields
   repetitions integer default 0,
   ease_factor numeric default 2.5,
   interval integer default 1,
