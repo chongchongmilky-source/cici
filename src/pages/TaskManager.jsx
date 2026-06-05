@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useTasks } from '../hooks/useTasks.js'
 import TaskForm from '../components/tasks/TaskForm.jsx'
 import TaskList from '../components/tasks/TaskList.jsx'
+import DailyTasks from '../components/tasks/DailyTasks.jsx'
 import { SearchBar, FilterButtons, EmptyState, Loader, Btn, PageHeader } from '../components/ui/index.jsx'
 import { TASK_STATUS, TASK_PRIORITY } from '../utils/constants.js'
 
@@ -13,11 +14,7 @@ const css = `
   margin-bottom: 20px;
 }
 @media (max-width: 480px) {
-  .task-stats {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 14px;
-  }
+  .task-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; margin-bottom: 14px; }
 }
 `
 
@@ -25,23 +22,28 @@ const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
   ...Object.entries(TASK_STATUS).map(([v, d]) => ({ value: v, label: d.label, color: d.color }))
 ]
-
 const PRIORITY_FILTERS = [
   { value: 'all', label: 'Mọi ưu tiên' },
   ...Object.entries(TASK_PRIORITY).map(([v, d]) => ({ value: v, label: d.label, color: d.color }))
 ]
 
 export default function TaskManager() {
-  const { tasks, loading, addTask, updateTask, removeTask } = useTasks()
+  const { tasks, loading, addTask, updateTask, removeTask, toggleDailyComplete } = useTasks()
   const [showForm, setShowForm] = useState(false)
+  const [showDailyForm, setShowDailyForm] = useState(false)
   const [editing, setEditing] = useState(null)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
 
+  // Tách daily và thường
+  const dailyTasks = useMemo(() => tasks.filter(t => t.is_daily), [tasks])
+  const regularTasks = useMemo(() => tasks.filter(t => !t.is_daily), [tasks])
+
   const filtered = useMemo(() => {
-    return tasks.filter(t => {
-      const matchSearch = !search || t.title.toLowerCase().includes(search.toLowerCase()) ||
+    return regularTasks.filter(t => {
+      const matchSearch = !search ||
+        t.title.toLowerCase().includes(search.toLowerCase()) ||
         t.description?.toLowerCase().includes(search.toLowerCase()) ||
         t.note?.toLowerCase().includes(search.toLowerCase()) ||
         t.tags?.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
@@ -49,20 +51,21 @@ export default function TaskManager() {
       const matchPriority = priorityFilter === 'all' || t.priority === priorityFilter
       return matchSearch && matchStatus && matchPriority
     })
-  }, [tasks, search, statusFilter, priorityFilter])
+  }, [regularTasks, search, statusFilter, priorityFilter])
 
   const statusFiltersWithCount = STATUS_FILTERS.map(f => ({
     ...f,
-    count: f.value === 'all' ? tasks.length : tasks.filter(t => t.status === f.value).length
+    count: f.value === 'all' ? regularTasks.length : regularTasks.filter(t => t.status === f.value).length
   }))
 
   const stats = {
-    total: tasks.length,
-    done: tasks.filter(t => t.status === 'done').length,
-    inProgress: tasks.filter(t => t.status === 'in_progress').length,
-    urgent: tasks.filter(t => t.priority === 'urgent' && t.status !== 'done').length,
+    total: regularTasks.length,
+    done: regularTasks.filter(t => t.status === 'done').length,
+    inProgress: regularTasks.filter(t => t.status === 'in_progress').length,
+    urgent: regularTasks.filter(t => t.priority === 'urgent' && t.status !== 'done').length,
   }
-
+// Thêm tạm dòng này ngay trước return
+console.log('dailyTasks:', dailyTasks, 'all tasks:', tasks)
   return (
     <>
       <style>{css}</style>
@@ -71,6 +74,16 @@ export default function TaskManager() {
           <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>
         </PageHeader>
 
+        {/* Section việc hàng ngày */}
+        <DailyTasks
+          tasks={dailyTasks}
+          onToggle={toggleDailyComplete}
+          onEdit={task => setEditing(task)}
+          onDelete={removeTask}
+          onAdd={() => setShowDailyForm(true)}
+        />
+
+        {/* Stats — chỉ tính task thường */}
         <div className="task-stats">
           {[
             { label: 'Tổng', value: stats.total, color: 'var(--text2)' },
@@ -85,23 +98,38 @@ export default function TaskManager() {
           ))}
         </div>
 
+        {/* Filter + Search */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
           <SearchBar value={search} onChange={setSearch} placeholder="Tìm công việc, ghi chú, tags..." />
           <FilterButtons options={statusFiltersWithCount} value={statusFilter} onChange={setStatusFilter} />
           <FilterButtons options={PRIORITY_FILTERS} value={priorityFilter} onChange={setPriorityFilter} />
         </div>
 
+        {/* Danh sách task thường */}
         {loading ? <Loader /> : (
           filtered.length === 0 ? (
-            <EmptyState icon="◈" title="Không có công việc nào" sub={search ? 'Thử tìm kiếm khác' : 'Thêm công việc đầu tiên'}
+            <EmptyState icon="◈" title="Không có công việc nào"
+              sub={search ? 'Thử tìm kiếm khác' : 'Thêm công việc đầu tiên'}
               action={!search && <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>} />
           ) : (
             <TaskList tasks={filtered} onEdit={t => setEditing(t)} onUpdate={updateTask} onDelete={removeTask} />
           )
         )}
 
+        {/* Form thêm task thường */}
         {showForm && <TaskForm onSave={addTask} onClose={() => setShowForm(false)} />}
-        {editing && <TaskForm initial={editing} onSave={d => updateTask(editing.id, d)} onClose={() => setEditing(null)} />}
+
+        {/* Form thêm việc hàng ngày */}
+        {showDailyForm && <TaskForm defaultDaily={true} onSave={addTask} onClose={() => setShowDailyForm(false)} />}
+
+        {/* Form sửa (cả 2 loại) */}
+        {editing && (
+          <TaskForm
+            initial={editing}
+            onSave={d => updateTask(editing.id, d)}
+            onClose={() => setEditing(null)}
+          />
+        )}
       </div>
     </>
   )
