@@ -4,7 +4,7 @@ import Sidebar from './Sidebar.jsx'
 const styles = `
 .layout { display: flex; height: 100vh; overflow: hidden; }
 .layout-main { flex: 1; overflow-y: auto; display: flex; flex-direction: column; min-width: 0; }
-.layout-content { flex: 1; padding: 28px 32px; max-width: 1200px; width: 100%; }
+.layout-content { flex: 1; padding: 28px 32px; max-width: 100%; width: 100%; }
 
 .mobile-header {
   display: none;
