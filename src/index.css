@@ -1,20 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&display=swap');
 
-/* FIX: ngăn cắt giao diện */
-* {
-  max-width: 100%;
-  box-sizing: border-box;
-}
 
-html, body, #root, .layout, .layout-main {
-  overflow-x: hidden;
-  width: 100%;
-}
-
-.layout-content {
-  overflow-x: auto;
-  width: 100%;
-}
+* { max-width: 100%; box-sizing: border-box; }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
