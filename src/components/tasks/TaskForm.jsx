@@ -10,7 +10,7 @@ const priorityOpts = Object.entries(TASK_PRIORITY).map(([v, d]) => ({ value: v, 
 export default function TaskForm({ initial, onSave, onClose, defaultDaily = false }) {
   const [form, setForm] = useState(initial || {
     title: '', description: '', status: 'todo', priority: 'medium',
-    due_date: '', note: '', tags: [], time_spent: 0,
+    due_date: null, note: '', tags: [], time_spent: 0,
     is_daily: defaultDaily,
   })
   const [tagInput, setTagInput] = useState('')
@@ -27,6 +27,10 @@ export default function TaskForm({ initial, onSave, onClose, defaultDaily = fals
   async function handleSubmit(e) {
     e.preventDefault()
     if (!form.title.trim()) return
+      const submitData = {
+    ...form,
+    due_date: form.due_date === '' ? null : form.due_date,
+  }
     try {
       setSaving(true)
       await onSave(form)
