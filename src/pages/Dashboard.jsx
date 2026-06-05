@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import { useTasks } from '../hooks/useTasks';
 import { useBugs } from '../hooks/useBugs';
 import { useLearn } from '../hooks/useLearn';
@@ -15,6 +16,21 @@ const css = `
   border: 1px solid var(--border);
   padding: 18px 20px;
 }
+.stat-card {
+  background: var(--bg2);
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: border-color var(--transition), background var(--transition), transform 0.15s ease;
+  text-decoration: none;
+  display: block;
+}
+.stat-card:hover {
+  background: var(--bg3);
+  transform: translateY(-2px);
+}
+.stat-card:active { transform: translateY(0); }
 @media (max-width: 480px) {
   .dash-grid { grid-template-columns: 1fr; gap: 12px; }
   .dash-tip { padding: 14px 16px; }
@@ -22,6 +38,7 @@ const css = `
 `
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { tasks = [] } = useTasks();
   const { bugs = [] } = useBugs();
   const { subjects = [] } = useLearn();
@@ -52,6 +69,7 @@ export default function Dashboard() {
             sub={`${stats.completedTasks} hoàn thành · ${stats.inProgressTasks} đang làm`}
             icon="◈"
             color="var(--accent)"
+            onClick={() => navigate('/tasks')}
           />
           <StatCard
             title="Bug Tracker"
@@ -59,6 +77,7 @@ export default function Dashboard() {
             sub={`${stats.fixedBugs} đã giải quyết · ${stats.criticalBugs} nghiêm trọng`}
             icon="◉"
             color="var(--accent2)"
+            onClick={() => navigate('/bugs')}
           />
           <StatCard
             title="Ôn luyện"
@@ -66,6 +85,7 @@ export default function Dashboard() {
             sub="Học chủ động với spaced repetition"
             icon="◆"
             color="var(--accent3)"
+            onClick={() => navigate('/learn')}
           />
         </div>
 
@@ -82,21 +102,20 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, sub, icon, color }) {
+function StatCard({ title, value, sub, icon, color, onClick }) {
   return (
-    <div style={{
-      background: 'var(--bg2)',
-      borderRadius: 'var(--radius)',
-      border: '1px solid var(--border)',
-      padding: '16px 18px',
-      borderLeft: `3px solid ${color}`,
-    }}>
+    <div className="stat-card" style={{ borderLeft: `3px solid ${color}` }} onClick={onClick}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 10 }}>
         <span style={{ fontSize: 18, color }}>{icon}</span>
         <span style={{ fontSize: 30, fontWeight: 800, color }}>{value}</span>
       </div>
-      <div style={{ fontWeight: 700, marginBottom: 3, fontSize: 14 }}>{title}</div>
-      <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{sub}</div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+        <div>
+          <div style={{ fontWeight: 700, marginBottom: 3, fontSize: 14 }}>{title}</div>
+          <div style={{ fontSize: 12, color: 'var(--text3)', lineHeight: 1.5 }}>{sub}</div>
+        </div>
+        <span style={{ fontSize: 16, color: 'var(--text3)', flexShrink: 0, marginLeft: 8 }}>→</span>
+      </div>
     </div>
   );
 }
