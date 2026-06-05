@@ -2,32 +2,18 @@ import { supabase } from './supabase'
 
 const TABLE = 'tasks'
 
-// Hàm chuẩn hóa priority
 function normalizePriority(priority) {
   const mapping = {
-    'Thấp': 'low',
-    'Trung bình': 'medium',
-    'Cao': 'high',
-    'Khẩn cấp': 'urgent',
-    'low': 'low',
-    'medium': 'medium',
-    'high': 'high',
-    'urgent': 'urgent',
+    'Thấp': 'low', 'Trung bình': 'medium', 'Cao': 'high', 'Khẩn cấp': 'urgent',
+    'low': 'low', 'medium': 'medium', 'high': 'high', 'urgent': 'urgent',
   }
   return mapping[priority] || 'medium'
 }
 
-// Hàm chuẩn hóa status
 function normalizeStatus(status) {
   const mapping = {
-    'Cần làm': 'todo',
-    'Đang làm': 'in_progress',
-    'Xong': 'done',
-    'Huỷ': 'cancelled',
-    'todo': 'todo',
-    'in_progress': 'in_progress',
-    'done': 'done',
-    'cancelled': 'cancelled',
+    'Cần làm': 'todo', 'Đang làm': 'in_progress', 'Xong': 'done', 'Huỷ': 'cancelled',
+    'todo': 'todo', 'in_progress': 'in_progress', 'done': 'done', 'cancelled': 'cancelled',
   }
   return mapping[status] || 'todo'
 }
@@ -49,10 +35,7 @@ export const taskService = {
       status: normalizeStatus(task.status),
     }
     const { data, error } = await supabase
-      .from(TABLE)
-      .insert(normalizedTask)
-      .select()
-      .single()
+      .from(TABLE).insert(normalizedTask).select().single()
     if (error) throw error
     return data
   },
@@ -60,33 +43,39 @@ export const taskService = {
   async update(id, updates) {
     const normalizedUpdates = {
       ...updates,
-      priority: updates.priority ? normalizePriority(updates.priority) : undefined,
-      status: updates.status ? normalizeStatus(updates.status) : undefined,
+      ...(updates.priority ? { priority: normalizePriority(updates.priority) } : {}),
+      ...(updates.status ? { status: normalizeStatus(updates.status) } : {}),
     }
     const { data, error } = await supabase
-      .from(TABLE)
-      .update(normalizedUpdates)
-      .eq('id', id)
-      .select()
-      .single()
+      .from(TABLE).update(normalizedUpdates).eq('id', id).select().single()
     if (error) throw error
     return data
   },
 
   async remove(id) {
-    const { error } = await supabase
-      .from(TABLE)
-      .delete()
-      .eq('id', id)
+    const { error } = await supabase.from(TABLE).delete().eq('id', id)
     if (error) throw error
   },
 
-  // 🆕 Xoá toàn bộ tasks của user
   async deleteAll(userId) {
-    const { error } = await supabase
-      .from(TABLE)
-      .delete()
-      .eq('user_id', userId)
+    const { error } = await supabase.from(TABLE).delete().eq('user_id', userId)
     if (error) throw error
-  }
+  },
+
+  // Tích hoàn thành task hàng ngày — lưu ngày hôm nay
+  async completeDailyTask(id) {
+    const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD
+    const { data, error } = await supabase
+      .from(TABLE).update({ last_completed_date: today }).eq('id', id).select().single()
+    if (error) throw error
+    return data
+  },
+
+  // Bỏ tích task hàng ngày
+  async uncompleteDailyTask(id) {
+    const { data, error } = await supabase
+      .from(TABLE).update({ last_completed_date: null }).eq('id', id).select().single()
+    if (error) throw error
+    return data
+  },
 }
