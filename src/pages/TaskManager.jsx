@@ -5,6 +5,22 @@ import TaskList from '../components/tasks/TaskList.jsx'
 import { SearchBar, FilterButtons, EmptyState, Loader, Btn, PageHeader } from '../components/ui/index.jsx'
 import { TASK_STATUS, TASK_PRIORITY } from '../utils/constants.js'
 
+const css = `
+.task-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+@media (max-width: 480px) {
+  .task-stats {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 14px;
+  }
+}
+`
+
 const STATUS_FILTERS = [
   { value: 'all', label: 'Tất cả' },
   ...Object.entries(TASK_STATUS).map(([v, d]) => ({ value: v, label: d.label, color: d.color }))
@@ -48,50 +64,45 @@ export default function TaskManager() {
   }
 
   return (
-    <div>
-      <PageHeader title="Công việc" sub={`${stats.done}/${stats.total} hoàn thành`} accentColor="var(--task)">
-        <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>
-      </PageHeader>
+    <>
+      <style>{css}</style>
+      <div>
+        <PageHeader title="Công việc" sub={`${stats.done}/${stats.total} hoàn thành`} accentColor="var(--task)">
+          <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>
+        </PageHeader>
 
-      {/* Stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 10, marginBottom: 20 }}>
-        {[
-          { label: 'Tổng', value: stats.total, color: 'var(--text2)' },
-          { label: 'Đang làm', value: stats.inProgress, color: 'var(--accent)' },
-          { label: 'Hoàn thành', value: stats.done, color: 'var(--accent3)' },
-          { label: 'Khẩn cấp', value: stats.urgent, color: 'var(--accent2)' },
-        ].map(s => (
-          <div key={s.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px 14px' }}>
-            <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
-            <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{s.label}</div>
-          </div>
-        ))}
+        <div className="task-stats">
+          {[
+            { label: 'Tổng', value: stats.total, color: 'var(--text2)' },
+            { label: 'Đang làm', value: stats.inProgress, color: 'var(--accent)' },
+            { label: 'Hoàn thành', value: stats.done, color: 'var(--accent3)' },
+            { label: 'Khẩn cấp', value: stats.urgent, color: 'var(--accent2)' },
+          ].map(s => (
+            <div key={s.label} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '12px 14px' }}>
+              <div style={{ fontSize: 22, fontWeight: 800, color: s.color }}>{s.value}</div>
+              <div style={{ fontSize: 12, color: 'var(--text3)', marginTop: 2 }}>{s.label}</div>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+          <SearchBar value={search} onChange={setSearch} placeholder="Tìm công việc, ghi chú, tags..." />
+          <FilterButtons options={statusFiltersWithCount} value={statusFilter} onChange={setStatusFilter} />
+          <FilterButtons options={PRIORITY_FILTERS} value={priorityFilter} onChange={setPriorityFilter} />
+        </div>
+
+        {loading ? <Loader /> : (
+          filtered.length === 0 ? (
+            <EmptyState icon="◈" title="Không có công việc nào" sub={search ? 'Thử tìm kiếm khác' : 'Thêm công việc đầu tiên'}
+              action={!search && <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>} />
+          ) : (
+            <TaskList tasks={filtered} onEdit={t => setEditing(t)} onUpdate={updateTask} onDelete={removeTask} />
+          )
+        )}
+
+        {showForm && <TaskForm onSave={addTask} onClose={() => setShowForm(false)} />}
+        {editing && <TaskForm initial={editing} onSave={d => updateTask(editing.id, d)} onClose={() => setEditing(null)} />}
       </div>
-
-      {/* Filters */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
-        <SearchBar value={search} onChange={setSearch} placeholder="Tìm công việc, ghi chú, tags..." />
-        <FilterButtons options={statusFiltersWithCount} value={statusFilter} onChange={setStatusFilter} />
-        <FilterButtons options={PRIORITY_FILTERS} value={priorityFilter} onChange={setPriorityFilter} />
-      </div>
-
-      {/* List */}
-      {loading ? <Loader /> : (
-        filtered.length === 0 ? (
-          <EmptyState icon="◈" title="Không có công việc nào" sub={search ? 'Thử tìm kiếm khác' : 'Thêm công việc đầu tiên'}
-            action={!search && <Btn onClick={() => setShowForm(true)}>+ Thêm công việc</Btn>} />
-        ) : (
-          <TaskList
-            tasks={filtered}
-            onEdit={t => setEditing(t)}
-            onUpdate={updateTask}
-            onDelete={removeTask}
-          />
-        )
-      )}
-
-      {showForm && <TaskForm onSave={addTask} onClose={() => setShowForm(false)} />}
-      {editing && <TaskForm initial={editing} onSave={d => updateTask(editing.id, d)} onClose={() => setEditing(null)} />}
-    </div>
+    </>
   )
 }

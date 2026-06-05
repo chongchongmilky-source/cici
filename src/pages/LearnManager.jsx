@@ -20,7 +20,7 @@ const css = `
 .lesson-content { font-size: 13px; color: var(--text2); line-height: 1.6; white-space: pre-wrap; }
 .lesson-note { font-size: 12px; color: var(--text2); white-space: pre-wrap; padding: 8px 12px; background: var(--bg3); border-left: 3px solid var(--accent4); border-radius: 0 6px 6px 0; margin-top: 8px; }
 .review-indicator { display: flex; align-items: center; gap: 5px; font-size: 11px; font-family: var(--mono); }
-@media (max-width: 700px) { .learn-layout { grid-template-columns: 1fr; } }
+@media (max-width: 768px) { .learn-layout { grid-template-columns: 1fr; } .learn-sidebar { max-height: 280px; overflow-y: auto; } }
 `
 
 const STATUS_OPTS = Object.entries(LESSON_STATUS).map(([v, d]) => ({ value: v, label: d.label }))
